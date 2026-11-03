@@ -28,11 +28,24 @@ export default function Home() {
   async function loadPosts() {
     setLoading(true); setMessage("Lecture des publications depuis X…");
     try {
-      const response = await fetch("/api/x/posts", { cache: "no-store" });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Lecture X impossible.");
-      setUser(data.user); setPosts(data.posts || []);
-      setMessage((data.posts || []).length + " publications récupérées. " + (data.limited ? "Limite de consultation atteinte (3 200 publications maximum dans cette session)." : "La consultation est terminée."));
+      let cursor = "";
+      let collected: XPost[] = [];
+      let currentUser: XUser | null = null;
+      let pageCount = 0;
+      do {
+        const url = "/api/x/posts" + (cursor ? "?cursor=" + encodeURIComponent(cursor) : "");
+        const response = await fetch(url, { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Lecture X impossible.");
+        currentUser = data.user;
+        collected = collected.concat(data.posts || []);
+        cursor = data.nextToken || "";
+        pageCount++;
+        setPosts([...collected]);
+        setUser(currentUser);
+        setMessage(collected.length + " publications récupérées…");
+      } while (cursor && pageCount < 32);
+      setMessage(collected.length + " publications récupérées. " + (cursor ? "Limite de consultation atteinte (3 200 publications maximum)." : "La consultation est terminée."));
     } catch (error) { setMessage(error instanceof Error ? error.message : "Erreur de lecture."); }
     finally { setLoading(false); }
   }
