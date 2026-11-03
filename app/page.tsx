@@ -11,7 +11,6 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("Connectez votre compte X pour afficher vos publications.");
-  const [connectedChecked, setConnectedChecked] = useState(false);
   const cutoff = "2023-01-01T00:00:00.000Z";
   const oldPosts = useMemo(() => posts.filter(p => p.created_at && new Date(p.created_at).getTime() < Date.parse(cutoff)), [posts]);
   const dateLabel = (value: string) => new Date(value).toLocaleString("fr-FR");
@@ -22,7 +21,7 @@ export default function Home() {
       const data = await response.json();
       if (data.connected && data.user) { setUser(data.user); setMessage("Compte X connecté. Chargez vos publications."); }
     } catch { setMessage("Impossible de vérifier la connexion X."); }
-    finally { setConnectedChecked(true); }
+    finally { /* session check completed */ }
   }
   useEffect(() => { void checkSession(); }, []);
 
