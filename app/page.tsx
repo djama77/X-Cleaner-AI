@@ -5,11 +5,11 @@ import type { ChangeEvent } from "react";
 import JSZip from "jszip";
 
 type Post = { id: string; text: string; date: string; source: string; category: "automated" | "personal" | "uncertain"; reason: string };
-const phraseRules = [/automatically checked by/i, /automatically posted/i, /posted via/i, /via ifttt/i, /via dlvr\\.it/i, /sent from my/i];
+const phraseRules = [/automatically checked by/i, /automatically posted/i, /posted via/i, /via ifttt/i, /via dlvr\.it/i, /sent from my/i];
 function parseTweets(raw: string): unknown[] {
   const start = raw.indexOf("[");
   if (start < 0) throw new Error("Fichier tweets.js non reconnu.");
-  return JSON.parse(raw.slice(start).replace(/;\\s*$/, ""));
+  return JSON.parse(raw.slice(start).replace(/;\s*$/, ""));
 }
 function unwrap(value: unknown): Record<string, unknown> {
   const v = value as Record<string, unknown>;
@@ -29,7 +29,7 @@ export default function Home() {
     setBusy(true); setMessage("Lecture de l'archive en cours…");
     try {
       const zip = await JSZip.loadAsync(file);
-      const files = Object.values(zip.files).filter(f=>!f.dir && /(^|\\/)tweets(?:\\.part\\d+)?\\.js$/i.test(f.name));
+      const files = Object.values(zip.files).filter(f=>!f.dir && /(^|\/)tweets(?:\.part\d+)?\.js$/i.test(f.name));
       if (!files.length) throw new Error("Aucun fichier tweets.js trouvé. Vérifiez que vous avez choisi l'archive X officielle.");
       const all: Post[] = [];
       for (const entry of files) {
@@ -37,7 +37,7 @@ export default function Home() {
         for (const item of parseTweets(raw)) {
           const t = unwrap(item); const text = String(t.full_text ?? t.text ?? "");
           const source = String(t.source ?? "").replace(/<[^>]*>/g, "").trim();
-          const automated = phraseRules.some(rule=>rule.test(text)) || /ifttt|dlvr\\.it|buffer|socialdog|flwrs/i.test(source);
+          const automated = phraseRules.some(rule=>rule.test(text)) || /ifttt|dlvr\.it|buffer|socialdog|flwrs/i.test(source);
           all.push({ id:String(t.id_str ?? t.id ?? all.length), text, date:String(t.created_at ?? ""), source, category:automated?"automated":"uncertain", reason:automated?"Indice explicite de service tiers":"À vérifier" });
         }
       }
@@ -64,7 +64,7 @@ export default function Home() {
   }
   function exportCsv() {
     const rows=[["id","date","source","category","reason","text"],...posts.map(p=>[p.id,p.date,p.source,p.category,p.reason,p.text])];
-    const blob=new Blob(["\\uFEFF"+rows.map(r=>r.map(csvCell).join(",")).join("\\n")],{type:"text/csv;charset=utf-8"});
+    const blob=new Blob(["\uFEFF"+rows.map(r=>r.map(csvCell).join(",")).join("\n")],{type:"text/csv;charset=utf-8"});
     const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="x-cleaner-analysis.csv"; a.click(); URL.revokeObjectURL(url);
   }
   const visible = posts.filter(p=>filter==="all"||p.category===filter);
