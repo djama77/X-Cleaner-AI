@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     }
     const me = await xFetch("/2/users/me");
     if (!me.data?.id) return NextResponse.json({ error: "Compte X non identifié." }, { status: 401 });
-    const ids = [...new Set(body.ids.filter((id: unknown) => typeof id === "string" && /^\\d{1,30}$/.test(id)))];
+    const ids = [...new Set(body.ids.filter((id: unknown) => typeof id === "string" && /^\d{1,30}$/.test(id)))];
     if (!ids.length) return NextResponse.json({ error: "Aucun identifiant valide." }, { status: 400 });
     const lookup = await xFetch("/2/tweets?ids=" + ids.join(",") + "&tweet.fields=created_at,author_id");
     const eligible = filterEligibleOldPosts(lookup.data || [], me.data.id);
